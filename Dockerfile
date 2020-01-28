@@ -1,4 +1,4 @@
-FROM heroku/heroku:18-build
+FROM heroku/heroku:16-build
 ARG DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && apt-get install -y \
