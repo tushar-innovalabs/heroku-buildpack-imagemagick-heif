@@ -48,7 +48,7 @@ function vendor() {
 
 echo "Vendoring binaries" | arrow
 
-vendor "${ROOT_DIR}/build/imagemagick.tar.gz" "$BUILD_DIR/vendor/imagemagick"
+vendor "${ROOT_DIR}/build/imagemagick.tar.gz" "$BUILD_DIR/vendor"
 
 echo "Configuring build environment" | arrow
 
