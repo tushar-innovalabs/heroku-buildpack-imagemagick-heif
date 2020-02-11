@@ -25,7 +25,9 @@ https://github.com/HiMamaInc/heroku-buildpack-imagemagick-heif
 
 From the command line:
 
-`heroku buildpacks:add https://github.com/HiMamaInc/heroku-buildpack-imagemagick-heif --index 1 --app HEROKU_APP_NAME`
+```
+heroku buildpacks:add https://github.com/HiMamaInc/heroku-buildpack-imagemagick-heif --index 1 --app HEROKU_APP_NAME
+```
 
 ## How to Build a New Binary
 
@@ -41,24 +43,24 @@ Steps:
 
  From the command line: 
  
-        ```docker run --rm -ti heroku/heroku:16-build```
+ `docker run --rm -ti heroku/heroku:16-build`
  
  This will take you to an interactive bash shell as a root user inside the container. The `--rm` flag removes the docker process on exiting.  The `-ti` flag creates the interactive bash shell.
  
 2. Get the libraries and dependencies you need(some of these already exist on the system):
 
-        `apt-get update && apt-get install build-essential autoconf libtool git-core`
-        `apt-get build-dep imagemagick libmagickcore-dev libde265 libheif`
+ `apt-get update && apt-get install build-essential autoconf libtool git-core`
+ `apt-get build-dep imagemagick libmagickcore-dev libde265 libheif`
 
 3. Clone the libde265 and libheif libraries:
 
-        `git clone https://github.com/strukturag/libde265.git`
-        `git clone https://github.com/strukturag/libheif.git`
+ `git clone https://github.com/strukturag/libde265.git`
+ `git clone https://github.com/strukturag/libheif.git`
 
 4. install the libde265 library:
 
-        `cd libde265/`
-        `./autogen.sh && ./configure && make && make install`
+ `cd libde265/`
+ `./autogen.sh && ./configure && make && make install`
 
 5. Install the libheif library:
 
