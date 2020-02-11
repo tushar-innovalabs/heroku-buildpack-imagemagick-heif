@@ -45,9 +45,8 @@ Steps:
  From the command line: 
  
      ```bash
-     $ docker run --rm -ti heroku/heroku:16-build
+     $ docker run --rm -it heroku/heroku:16-build
      ```
-
  
  This will take you to an interactive bash shell as a root user inside the container. The `--rm` flag removes the docker process on exiting.  The `-ti` flag creates the interactive bash shell.
  
