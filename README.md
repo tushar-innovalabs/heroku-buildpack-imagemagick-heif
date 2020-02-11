@@ -6,6 +6,7 @@ The rise in popularity and use of HEIF/HEIC(High Efficency Image Format) means y
 The orginal buildpack was created for `heroku-18` stacks but this one was modified to work with [Heroku stack:](https://devcenter.heroku.com/articles/stack) `heroku-16`. 
 
 The tar file in the [/build folder](./build) currently contains: 
+
 Version: ImageMagick 7.0.9-22 Q16 x86_64 2020-02-10 https://imagemagick.org
 
 You will need to build a new binary if you want to use a newer version. To build a new binary see the section on 
@@ -43,75 +44,97 @@ Steps:
 
  From the command line: 
  
- `docker run --rm -ti heroku/heroku:16-build`
+     ```bash
+     $ docker run --rm -ti heroku/heroku:16-build
+     ```
  
  This will take you to an interactive bash shell as a root user inside the container. The `--rm` flag removes the docker process on exiting.  The `-ti` flag creates the interactive bash shell.
  
 2. Get the libraries and dependencies you need(some of these already exist on the system):
 
- `apt-get update && apt-get install build-essential autoconf libtool git-core`
- `apt-get build-dep imagemagick libmagickcore-dev libde265 libheif`
+     ```bash
+     $ apt-get update && apt-get install build-essential autoconf libtool git-core
+     $ apt-get build-dep imagemagick libmagickcore-dev libde265 libheif
+     ```
 
 3. Clone the libde265 and libheif libraries:
 
- `git clone https://github.com/strukturag/libde265.git`
- `git clone https://github.com/strukturag/libheif.git`
+     ```bash
+     $ git clone https://github.com/strukturag/libde265.git
+     $ git clone https://github.com/strukturag/libheif.git
+     ```
 
 4. install the libde265 library:
 
- `cd libde265/`
- `./autogen.sh && ./configure && make && make install`
+     ```bash
+     $ cd libde265/
+     $ ./autogen.sh && ./configure && make && make install
+     ```
 
 5. Install the libheif library:
 
-        `cd ../libheif/`
-        `./autogen.sh && ./configure && make && make install`
+    ```bash
+    $ cd ../libheif/
+    $ ./autogen.sh && ./configure && make && make install
+    ```
 
 6. Get, Configure and Install Newest Imagemagick:
 
-        `cd /usr/src/`
-        `wget https://www.imagemagick.org/download/ImageMagick.tar.gz`
-        `tar xf ImageMagick.tar.gz `
-        `cd ImageMagick-7*` (This might be 8 at some point?)
-        ` ./configure --with-heic=yes --prefix=/usr/src/imagemagick --without-gvc`
-        ` make && make install`
+    ```bash
+    $ cd /usr/src/
+    $ wget https://www.imagemagick.org/download/ImageMagick.tar.gz
+    $ tar xf ImageMagick.tar.gz
+    $ cd ImageMagick-7*` (This might be 8 at some point?)
+    $ ./configure --with-heic=yes --prefix=/usr/src/imagemagick --without-gvc
+    $ make && make install
+    ```
 
 _take a break this will take a few min to install_
 
 7. Move the dependencies into imagemagick library:
 
-         `cp /usr/local/lib/libde265.so.0 /usr/src/imagemagick/lib`
-        `cp /usr/local/lib/libheif.so.1 /usr/src/imagemagick/lib`
-        `cp /usr/lib/x86_64-linux-gnu/libomp.so.5 /usr/src/imagemagick/lib`
-        `cp /usr/lib/x86_64-linux-gnu/libiomp5.so /usr/src/imagemagick/lib` 
+    ```bash
+    $ cp /usr/local/lib/libde265.so.0 /usr/src/imagemagick/lib
+    $ cp /usr/local/lib/libheif.so.1 /usr/src/imagemagick/lib
+    $ cp /usr/lib/x86_64-linux-gnu/libomp.so.5 /usr/src/imagemagick/lib
+    $ cp /usr/lib/x86_64-linux-gnu/libiomp5.so /usr/src/imagemagick/lib
+    ```
 
 _the last 2 libraries are not available at run time on heroku only build time see [Ubuntu Packages on Heroku Stacks](https://devcenter.heroku.com/articles/stack-packages) for more info_
 
 8. Clean up the build and get ready for packaging:
 
-          `cd /usr/src/imagemagick`
-          `strip lib/*.a lib/lib*.so*`
+    ```bash
+    $ cd /usr/src/imagemagick
+    $ strip lib/*.a lib/lib*.so*
+    ```
 
 [What does `strip` do?](https://en.wikipedia.org/wiki/Strip_(Unix))
 
 9. Wrap it up with a bow(compress the binary):
 
-        `cd /usr/src/imagemagick`
-        `rm -rf build`
-        `tar czf /usr/src/imagemagick/build/imagemagick.tar.gz bin include lib`
+    ```bash
+    $ cd /usr/src/imagemagick
+    $ rm -rf build
+    $ tar czf /usr/src/imagemagick/build/imagemagick.tar.gz bin include lib
+    ```
 
 10. Copy the tar file into the repo:
     (you need to have cloned this repo locally)
  a) From your local shell (ie. outside the container), find out the name of your container run: 
  
-              ```docker ps```
+     ```bash
+     $ docker ps
+     ```
   
   
    **Do not exit your container or ALL will be lost, open a new tab in your terminal**
         
   b) Copy the binary from the container to the repo on your local machine
   
-          ```cp <name_of_docker_container>:/usr/src/imagemagick.tar.gz <path_to_build_folder_in_git_repo>```
+          ```bash
+          $ cp <name_of_docker_container>:/usr/src/imagemagick.tar.gz <path_to_build_folder_in_git_repo>
+          ```
           
 11. Commit and Push to repo
 
