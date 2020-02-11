@@ -9,7 +9,7 @@ The tar file in the [/build folder](./build) currently contains:
 
 Version: ImageMagick 7.0.9-22 Q16 x86_64 2020-02-10 https://imagemagick.org
 
-You will need to build a new binary if you want to use a newer version. To build a new binary see the section on 
+You will need to build a new binary if you want to use a newer or different version. To build a new binary see [How to Build a New Binary](#how-to-build-a-new-binary)
 
 ## Usage
 
@@ -95,7 +95,7 @@ _This will take you to an interactive bash shell as a root user inside the conta
 _Take a break this will take a few min to install._
 
 
-7. Move the dependencies into imagemagick library:
+7. Copy the dependencies into imagemagick lib directory:
 
     ```bash
     $ cp /usr/local/lib/libde265.so.0 /usr/src/imagemagick/lib
