@@ -1,29 +1,127 @@
 heroku-buildpack-imagemagick-heif
 =================================
 
-This is a [Heroku buildpack](http://devcenter.heroku.com/articles/buildpacks) for vendoring the ImageMagick  with HEIF support binaries into your project.
+The rise in popularity and use of HEIF/HEIC(High Efficency Image Format) means your project's image processing also needs to be able to handle this format. The current default version of imagemagick installed on heroku:16 dynos is 6.8.9.9 and does not support processing heic image files. This [Heroku buildpack](http://devcenter.heroku.com/articles/buildpacks) vendors a version of ImageMagick with HEIF support binaries into your project. It is based on https://github.com/retailzipline/heroku-buildpack-imagemagick-heif.
 
-This one works with [Heroku stack](https://devcenter.heroku.com/articles/stack) `heroku-18`.
+The orginal buildpack was created for `heroku-18` stacks but this one was modified to work with [Heroku stack:](https://devcenter.heroku.com/articles/stack) `heroku-16`. 
+
+The tar file in the [/build folder](./build) currently contains: 
+Version: ImageMagick 7.0.9-22 Q16 x86_64 2020-02-10 https://imagemagick.org
+
+You will need to build a new binary if you want to use a newer version. To build a new binary see the section on 
 
 ## Usage
 
-Add this buildpack to your app:
+**NOTE:** _To ensure the newer version of imagemagick is found in the $PATH and installed first make sure this buildpack is added to the top of the buildpack list or at "index 1"._
+
+
+From your projects "Settings" tab add this buildpack to your app in the 1st position:
 
 ```
-https://github.com/epicatization/heroku-buildpack-imagemagick-heif
+https://github.com/HiMamaInc/heroku-buildpack-imagemagick-heif
 ```
 
-## Build script
+**OR**
 
-[This](./build.sh) is the script used to build vips using docker.
-After building a tar file, it will be copied to the `build` directory. Then you should commit this changes to git.
+From the command line:
 
-### Clear cache
+`heroku buildpacks:add https://github.com/HiMamaInc/heroku-buildpack-imagemagick-heif --index 1 --app HEROKU_APP_NAME`
+
+## How to Build a New Binary
+
+The binary in this repo was built in a heroku:16 docker image running in a local dev environment. The tar file was then copied into the `/build` directory in this repo and is used by the [compile script](./bin/compile).
+
+Prerequisites
+
+- Docker installed and running in local dev environment. [Get Docker](https://docs.docker.com/get-docker/)
+
+Steps:
+
+1. Spin up a docker container with the heroku:16 stack. This will build and behave exactly the same way a heroku:16 dyno except you will have write access. (make sure docker is running on your machine)
+
+ From the command line: 
+ 
+        ```docker run --rm -ti heroku/heroku:16-build```
+ 
+ This will take you to an interactive bash shell as a root user inside the container. The `--rm` flag removes the docker process on exiting.  The `-ti` flag creates the interactive bash shell.
+ 
+2. Get the libraries and dependencies you need(some of these already exist on the system):
+
+        `apt-get update && apt-get install build-essential autoconf libtool git-core`
+        `apt-get build-dep imagemagick libmagickcore-dev libde265 libheif`
+
+3. Clone the libde265 and libheif libraries:
+
+        `git clone https://github.com/strukturag/libde265.git`
+        `git clone https://github.com/strukturag/libheif.git`
+
+4. install the libde265 library:
+
+        `cd libde265/`
+        `./autogen.sh && ./configure && make && make install`
+
+5. Install the libheif library:
+
+        `cd ../libheif/`
+        `./autogen.sh && ./configure && make && make install`
+
+6. Get, Configure and Install Newest Imagemagick:
+
+        `cd /usr/src/`
+        `wget https://www.imagemagick.org/download/ImageMagick.tar.gz`
+        `tar xf ImageMagick.tar.gz `
+        `cd ImageMagick-7*` (This might be 8 at some point?)
+        ` ./configure --with-heic=yes --prefix=/usr/src/imagemagick --without-gvc`
+        ` make && make install`
+
+_take a break this will take a few min to install_
+
+7. Move the dependencies into imagemagick library:
+
+         `cp /usr/local/lib/libde265.so.0 /usr/src/imagemagick/lib`
+        `cp /usr/local/lib/libheif.so.1 /usr/src/imagemagick/lib`
+        `cp /usr/lib/x86_64-linux-gnu/libomp.so.5 /usr/src/imagemagick/lib`
+        `cp /usr/lib/x86_64-linux-gnu/libiomp5.so /usr/src/imagemagick/lib` 
+
+_the last 2 libraries are not available at run time on heroku only build time see [Ubuntu Packages on Heroku Stacks](https://devcenter.heroku.com/articles/stack-packages) for more info_
+
+8. Clean up the build and get ready for packaging:
+
+          `cd /usr/src/imagemagick`
+          `strip lib/*.a lib/lib*.so*`
+
+[What does `strip` do?](https://en.wikipedia.org/wiki/Strip_(Unix))
+
+9. Wrap it up with a bow(compress the binary):
+
+        `cd /usr/src/imagemagick`
+        `rm -rf build`
+        `tar czf /usr/src/imagemagick/build/imagemagick.tar.gz bin include lib`
+
+10. Copy the tar file into the repo:
+    (you need to have cloned this repo locally)
+ a) From your local shell (ie. outside the container), find out the name of your container run: 
+ 
+              ```docker ps```
+  
+  
+   **Do not exit your container or ALL will be lost, open a new tab in your terminal**
+        
+  b) Copy the binary from the container to the repo on your local machine
+  
+          ```cp <name_of_docker_container>:/usr/src/imagemagick.tar.gz <path_to_build_folder_in_git_repo>```
+          
+11. Commit and Push to repo
+
+
+### Clear cache(_Not Sure if this is necessary)
 Since the installation is cached you might want to clean it out due to config changes.
 
 1. `heroku plugins:install heroku-repo`
 2. `heroku repo:purge_cache -app HEROKU_APP_NAME`
 
 ### Credits
+https://medium.com/@eplt/5-minutes-to-install-imagemagick-with-heic-support-on-ubuntu-18-04-digitalocean-fe2d09dcef1
 https://github.com/brandoncc/heroku-buildpack-vips
 https://github.com/steeple-dev/heroku-buildpack-imagemagick
+https://github.com/retailzipline/heroku-buildpack-imagemagick-heif
