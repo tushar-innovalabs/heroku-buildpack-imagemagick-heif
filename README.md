@@ -47,6 +47,7 @@ Steps:
      ```bash
      $ docker run --rm -ti heroku/heroku:16-build
      ```
+
  
  This will take you to an interactive bash shell as a root user inside the container. The `--rm` flag removes the docker process on exiting.  The `-ti` flag creates the interactive bash shell.
  
@@ -84,7 +85,7 @@ Steps:
     $ cd /usr/src/
     $ wget https://www.imagemagick.org/download/ImageMagick.tar.gz
     $ tar xf ImageMagick.tar.gz
-    $ cd ImageMagick-7*` (This might be 8 at some point?)
+    $ cd ImageMagick-7* #(This might be 8 at some point?)
     $ ./configure --with-heic=yes --prefix=/usr/src/imagemagick --without-gvc
     $ make && make install
     ```
