@@ -53,7 +53,7 @@ vendor "${ROOT_DIR}/build/imagemagick.tar.gz" "$BUILD_DIR/vendor/imagemagick"
 echo "Configuring build environment" | arrow
 
 cat <<EOF > export
-export PATH="/app/bin:$PATH:\$PATH"
+export PATH="/app/bin:/app/vendor/imagemagick/bin:$PATH:\$PATH"
 export LD_LIBRARY_PATH="\$LD_LIBRARY_PATH:$LD_LIBRARY_PATH"
 export LIBRARY_PATH="\$LIBRARY_PATH:$LIBRARY_PATH"
 export PKG_CONFIG_PATH="\$PKG_CONFIG_PATH:$PKG_CONFIG_PATH"
@@ -65,7 +65,7 @@ echo "Building runtime environment" | arrow
 mkdir -p $BUILD_DIR/.profile.d
 
 cat <<EOF > $BUILD_DIR/.profile.d/$BUILDPACK_NAME.sh
-export PATH="/app/bin:${PATH//$BUILD_DIR//app}:\$PATH"
+export PATH="/app/bin:/app/vendor/imagemagick/bin:\$PATH"
 export LD_LIBRARY_PATH="\$LD_LIBRARY_PATH:${LD_LIBRARY_PATH//$BUILD_DIR//app}"
 export LIBRARY_PATH="\$LIBRARY_PATH:${LIBRARY_PATH//$BUILD_DIR//app}"
 export PKG_CONFIG_PATH="\$PKG_CONFIG_PATH:${PKG_CONFIG_PATH//$BUILD_DIR//app}"
