@@ -40,15 +40,14 @@ Prerequisites
 
 Steps:
 
-1. Spin up a docker container with the heroku:16 stack. This will build and behave exactly the same way a heroku:16 dyno except you will have write access. (make sure docker is running on your machine)
-
- From the command line: 
+1. Spin up a docker container with the heroku:16 stack. This will build and behave exactly the same way a heroku:16 dyno except you will have write access. (make sure docker is running on your machine). From command line:
  
      ```bash
      $ docker run --rm -it heroku/heroku:16-build
      ```
  
- This will take you to an interactive bash shell as a root user inside the container. The `--rm` flag removes the docker process on exiting.  The `-ti` flag creates the interactive bash shell.
+_This will take you to an interactive bash shell as a root user inside the container. The `--rm` flag removes the docker process on exiting.  The `-ti` flag creates the interactive bash shell._
+ 
  
 2. Get the libraries and dependencies you need(some of these already exist on the system):
 
@@ -57,12 +56,14 @@ Steps:
      $ apt-get build-dep imagemagick libmagickcore-dev libde265 libheif
      ```
 
+
 3. Clone the libde265 and libheif libraries:
 
      ```bash
      $ git clone https://github.com/strukturag/libde265.git
      $ git clone https://github.com/strukturag/libheif.git
      ```
+
 
 4. install the libde265 library:
 
@@ -71,12 +72,14 @@ Steps:
      $ ./autogen.sh && ./configure && make && make install
      ```
 
+
 5. Install the libheif library:
 
     ```bash
     $ cd ../libheif/
     $ ./autogen.sh && ./configure && make && make install
     ```
+
 
 6. Get, Configure and Install Newest Imagemagick:
 
@@ -89,7 +92,8 @@ Steps:
     $ make && make install
     ```
 
-_take a break this will take a few min to install_
+_Take a break this will take a few min to install._
+
 
 7. Move the dependencies into imagemagick library:
 
@@ -100,7 +104,8 @@ _take a break this will take a few min to install_
     $ cp /usr/lib/x86_64-linux-gnu/libiomp5.so /usr/src/imagemagick/lib
     ```
 
-_the last 2 libraries are not available at run time on heroku only build time see [Ubuntu Packages on Heroku Stacks](https://devcenter.heroku.com/articles/stack-packages) for more info_
+_The last 2 libraries are not available at run time on heroku only build time see [Ubuntu Packages on Heroku Stacks](https://devcenter.heroku.com/articles/stack-packages) for more info_
+
 
 8. Clean up the build and get ready for packaging:
 
@@ -111,6 +116,7 @@ _the last 2 libraries are not available at run time on heroku only build time se
 
 [What does `strip` do?](https://en.wikipedia.org/wiki/Strip_(Unix))
 
+
 9. Wrap it up with a bow(compress the binary):
 
     ```bash
@@ -119,23 +125,22 @@ _the last 2 libraries are not available at run time on heroku only build time se
     $ tar czf /usr/src/imagemagick/build/imagemagick.tar.gz bin include lib
     ```
 
-10. Copy the tar file into the repo:
-    (you need to have cloned this repo locally)
- a) From your local shell (ie. outside the container), find out the name of your container run: 
+
+10. Copy the compressed file/tarball from the docker container into the repo(_you need to have cloned this repo locally_):
  
-     ```bash
-     $ docker ps
-     ```
-  
-  
-   **Do not exit your container or ALL will be lost, open a new tab in your terminal**
-        
-  b) Copy the binary from the container to the repo on your local machine
-  
-          ```bash
-          $ cp <name_of_docker_container>:/usr/src/imagemagick.tar.gz <path_to_build_folder_in_git_repo>
-          ```
-          
+    ```bash
+    # List current running docker processes to find out the NAME of your container
+    $ docker ps
+    # copy the binary from the container to the build directory in the repo on your local machine
+    $ cp <NAME_of_docker_container>:/usr/src/imagemagick.tar.gz <path_to_build_folder_in_git_repo>
+    ```
+     
+
+**DO NOT EXIT YOUR CONTAINER or ALL will be lost, open a new tab in your terminal**
+ 
+_You may need to delete the old tarball from the bin folder first or to be safe copy the file from the container to your local machine before adding to the repo so you have a copy of the old binary tarball._
+
+
 11. Commit and Push to repo
 
 
