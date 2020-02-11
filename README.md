@@ -122,6 +122,7 @@ _The last 2 libraries are not available at run time on heroku only build time se
     ```bash
     $ cd /usr/src/imagemagick
     $ rm -rf build
+    $ mkdir build
     $ tar czf /usr/src/imagemagick/build/imagemagick.tar.gz bin include lib
     ```
 
