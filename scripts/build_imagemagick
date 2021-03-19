@@ -1,0 +1,62 @@
+#!/bin/bash
+
+# still have make some tweaks here
+
+# function error() {
+#   echo "🔥 $1" && exit 1
+# }
+
+echo "⚙️ Getting libraries and dependencies..."
+apt-get update -y
+apt-get install -y build-essential autoconf libtool git-core
+apt-get build-dep imagemagick libmagickcore-dev libde265 libheif
+if [[ $STACK == "heroku-20" ]]; then
+  echo "⚙️ Getting additional dependencies for the selected stack..."
+  apt-get install -y libomp5
+fi
+
+cd /usr/src/
+
+# install the libde265 library
+echo "⚙️ Installing annd configuring libde265..."
+git clone https://github.com/strukturag/libde265.git
+cd libde265/
+./autogen.sh && ./configure && make && make install
+
+# install the libheif library
+echo "⚙️ Installing and configuring libheif..."
+cd ../
+git clone https://github.com/strukturag/libheif.git
+cd libheif/
+./autogen.sh && ./configure && make && make install
+
+# get, configure and install newest imagemagick
+echo "⚙️ Installing latest imagemagick..."
+cd ../
+git clone https://github.com/ImageMagick/ImageMagick.git imagemagick
+cd imagemagick
+./configure --with-heic=yes --prefix=/usr/src/imagemagick --without-gvc
+make && make install
+
+# copy the dependencies into imagemagick lib directory
+cp /usr/local/lib/libde265.so.0 /usr/src/imagemagick/lib
+cp /usr/local/lib/libheif.so.1 /usr/src/imagemagick/lib
+cp /usr/lib/x86_64-linux-gnu/libomp.so.5 /usr/src/imagemagick/lib
+cp /usr/lib/x86_64-linux-gnu/libiomp5.so /usr/src/imagemagick/lib
+
+# clean up the build and get ready for packaging
+echo "🧹 Cleaning up..."
+cd /usr/src/imagemagick
+strip lib/*.a lib/lib*.so*
+
+# wrap it up with a bow(compress the binary)
+echo "🗄️ Compressing build..."
+cd /usr/src/imagemagick
+rm -rf build
+mkdir build
+tar czf /usr/src/imagemagick/build/imagemagick.tar.gz bin include lib
+
+# copy the compressed file/tarball from the docker container into the repo
+cp /usr/src/imagemagick/build/imagemagick.tar.gz /buildpack/build/$1
+
+echo "✅ All done!"
