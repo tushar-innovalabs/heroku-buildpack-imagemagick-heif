@@ -1,62 +1,80 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-# still have make some tweaks here
+set -e
 
-# function error() {
-#   echo "🔥 $1" && exit 1
-# }
+WORK_DIR=/usr/src
+
+function handle_error() {
+  local status=$?
+  if [[ $status > 0 ]]; then
+    echo "🔥 There was a problem building the binary. Operation aborted."
+    exit 1
+  fi
+}
+trap handle_error EXIT SIGINT
+
+function add_xenial_repositories() {
+  cat <<-EOT >> /etc/apt/sources.list
+  deb http://archive.ubuntu.com/ubuntu/ xenial main universe
+  deb http://security.ubuntu.com/ubuntu xenial-security main
+EOT
+}
+
+# add source packages repository to sources.list
+function add_source_repositories() {
+  echo "deb-src http://archive.ubuntu.com/ubuntu/ xenial main universe" >> /etc/apt/sources.list
+  if [[ $STACK == "heroku-20" ]]; then
+    add_xenial_repositories
+  fi
+}
+
+add_source_repositories
 
 echo "⚙️ Getting libraries and dependencies..."
 apt-get update -y
 apt-get install -y build-essential autoconf libtool git-core
-apt-get build-dep imagemagick libmagickcore-dev libde265 libheif
 if [[ $STACK == "heroku-20" ]]; then
   echo "⚙️ Getting additional dependencies for the selected stack..."
-  apt-get install -y libomp5
+  apt-get install -y libomp5 libomp-10-dev libjasper-dev
 fi
-
-cd /usr/src/
+apt-get build-dep -y imagemagick libmagickcore-dev
 
 # install the libde265 library
-echo "⚙️ Installing annd configuring libde265..."
-git clone https://github.com/strukturag/libde265.git
-cd libde265/
+echo "⚙️ Installing and configuring libde265..."
+git clone https://github.com/strukturag/libde265.git $WORK_DIR/libde265
+cd $WORK_DIR/libde265
 ./autogen.sh && ./configure && make && make install
 
 # install the libheif library
 echo "⚙️ Installing and configuring libheif..."
-cd ../
-git clone https://github.com/strukturag/libheif.git
-cd libheif/
+git clone https://github.com/strukturag/libheif.git $WORK_DIR/libheif
+cd $WORK_DIR/libheif
 ./autogen.sh && ./configure && make && make install
 
 # get, configure and install newest imagemagick
 echo "⚙️ Installing latest imagemagick..."
-cd ../
-git clone https://github.com/ImageMagick/ImageMagick.git imagemagick
-cd imagemagick
-./configure --with-heic=yes --prefix=/usr/src/imagemagick --without-gvc
+git clone https://github.com/ImageMagick/ImageMagick.git $WORK_DIR/imagemagick
+cd $WORK_DIR/imagemagick
+./configure --with-heic=yes --prefix=$WORK_DIR/imagemagick --without-gvc
 make && make install
 
 # copy the dependencies into imagemagick lib directory
-cp /usr/local/lib/libde265.so.0 /usr/src/imagemagick/lib
-cp /usr/local/lib/libheif.so.1 /usr/src/imagemagick/lib
-cp /usr/lib/x86_64-linux-gnu/libomp.so.5 /usr/src/imagemagick/lib
-cp /usr/lib/x86_64-linux-gnu/libiomp5.so /usr/src/imagemagick/lib
+cp /usr/local/lib/libde265.so.0 $WORK_DIR/imagemagick/lib
+cp /usr/local/lib/libheif.so.1 $WORK_DIR/imagemagick/lib
+cp /usr/lib/x86_64-linux-gnu/libomp.so.5 $WORK_DIR/imagemagick/lib
+cp /usr/lib/x86_64-linux-gnu/libiomp5.so $WORK_DIR/imagemagick/lib
 
 # clean up the build and get ready for packaging
 echo "🧹 Cleaning up..."
-cd /usr/src/imagemagick
 strip lib/*.a lib/lib*.so*
 
-# wrap it up with a bow(compress the binary)
+# compress the binary
 echo "🗄️ Compressing build..."
-cd /usr/src/imagemagick
 rm -rf build
 mkdir build
-tar czf /usr/src/imagemagick/build/imagemagick.tar.gz bin include lib
+tar czf $WORK_DIR/imagemagick/build/imagemagick.tar.gz bin include lib
 
 # copy the compressed file/tarball from the docker container into the repo
-cp /usr/src/imagemagick/build/imagemagick.tar.gz /buildpack/build/$1
+cp $WORK_DIR/imagemagick/build/imagemagick.tar.gz /buildpack/build/$1
 
 echo "✅ All done!"
