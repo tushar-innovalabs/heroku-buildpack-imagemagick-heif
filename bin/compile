@@ -6,6 +6,7 @@ set -e
 BUILD_DIR=$1
 CACHE_DIR=$2
 BUILDPACK_NAME=imagemagick
+BINARY_NAME=imagemagick-${STACK}.tar.gz
 BIN_DIR=$(cd "$(dirname "$0")"; pwd) # absolute path
 ROOT_DIR=$(dirname "$BIN_DIR")
 
@@ -24,6 +25,11 @@ arrow() {
 function vendor() {
   binary="$1"
   path="$2"
+
+  if [ ! -f "$binary" ]; then
+    echo "Binary file '${binary}' not found for stack ${STACK}" | indent
+    exit 1
+  fi
 
   echo "Fetching $binary" | indent
   mkdir -p $path
@@ -48,7 +54,7 @@ function vendor() {
 
 echo "Vendoring binaries" | arrow
 
-vendor "${ROOT_DIR}/build/imagemagick.tar.gz" "$BUILD_DIR/vendor/imagemagick"
+vendor "${ROOT_DIR}/build/${BINARY_NAME}" "$BUILD_DIR/vendor/imagemagick"
 
 echo "Configuring build environment" | arrow
 
