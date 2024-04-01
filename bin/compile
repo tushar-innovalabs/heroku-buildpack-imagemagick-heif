@@ -9,6 +9,8 @@ BUILDPACK_NAME=imagemagick
 BINARY_NAME=imagemagick-${STACK}.tar.gz
 BIN_DIR=$(cd "$(dirname "$0")"; pwd) # absolute path
 ROOT_DIR=$(dirname "$BIN_DIR")
+VENDOR_DIR="$BUILD_DIR/vendor"
+INSTALL_DIR="$VENDOR_DIR/imagemagick"
 
 function indent() {
   c='s/^/       /'
@@ -77,4 +79,17 @@ export LIBRARY_PATH="\$LIBRARY_PATH:${LIBRARY_PATH//$BUILD_DIR//app}"
 export PKG_CONFIG_PATH="\$PKG_CONFIG_PATH:${PKG_CONFIG_PATH//$BUILD_DIR//app}"
 export CPPPATH="\$CPPPATH:${CPPPATH//$BUILD_DIR//app}"
 export CPATH="\$CPATH:${CPATH//$BUILD_DIR//app}"
+EOF
+
+
+echo "-----> Writing policy file"
+mkdir -p $INSTALL_DIR/etc/ImageMagick
+cat > $INSTALL_DIR/policy.xml <<EOF
+<policymap>
+  <policy domain="coder" rights="none" pattern="EPHEMERAL" />
+  <policy domain="coder" rights="none" pattern="HTTPS" />
+  <policy domain="coder" rights="none" pattern="MVG" />
+  <policy domain="coder" rights="none" pattern="MSL" />
+  <policy domain="coder" rights="none" pattern="HTTPS" />
+</policymap>
 EOF
